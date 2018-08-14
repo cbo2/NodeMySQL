@@ -21,19 +21,43 @@ connection.connect(function (err) {
 });
 
 function runApp() {
-    clearAndCreateDB();
-    seedDB();
+    setupDB();
+}
 
-    var query = "SELECT * FROM products";
-    connection.query(query, function (err, res) {
-        for (var i = 0; i < res.length; i++) {
-            console.log("Item: " + res[i].item_id + " || product_name: " + res[i].product_name + " || price: " + res[i].price);
-        }
-        process.exit();
+function queryUser() {
+    connection.query("SELECT item_id, product_name, price from products", function (err, res) {
+        console.log("-checking things and res.item_id is: " + res[0].item_id);
+        res.map(function (row) { console.log("==> item id is: " + row.item_id); });
+        inquirer
+            .prompt({
+                name: "item",
+                type: "list",
+                message: "Which item would you like to purchase?",
+                choices: res.map(function (item) { return item.product_name; })
+            })
+            .then(function (itemAnswer) {
+                var selectedItem = res.filter(function(curritem) {
+                    return curritem.product_name === itemAnswer.item;
+                });
+                console.log("The full selected item has id: " + selectedItem[0].item_id + " and price: " + selectedItem[0].price);
+                inquirer
+                    .prompt({
+                        name: "quantity",
+                        type: "input",
+                        message: "How many would you like?",
+                        choices: res.map(function (item) { return item.product_name; })
+                    })
+                    .then(function (quantityAnswer) {
+                        console.log("you requested " + quantityAnswer.quantity);
+                    });
+            });
     });
 }
 
-function clearAndCreateDB() {
+// Started off with the SQL commands in MySQLWorkbench, then moved them here to make execution cleaner.
+// This function will drop the database (clearing contents of course), then recreate the database, the table
+// and populate it with some initial data
+function setupDB() {
     connection.query("DROP DATABASE IF EXISTS bamazon", function (err, res) {
         if (err) {
             console.log("There was an error dropping database bamazon with error: " + err);
@@ -52,7 +76,7 @@ function clearAndCreateDB() {
             throw err;
         }
     });
-    var create = "CREATE TABLE products (" 
+    var create = "CREATE TABLE products ("
         + "item_id INTEGER(10) AUTO_INCREMENT NOT NULL,"
         + "product_name VARCHAR(100) NOT NULL,"
         + "department_name VARCHAR(40) NULL,"
@@ -64,6 +88,7 @@ function clearAndCreateDB() {
             console.log("There was an error creating table products with error: " + err);
             throw err;
         }
+        seedDB();
     });
 }
 
@@ -82,13 +107,14 @@ function seedDB() {
     ]
     var query = "INSERT INTO products set ?";
 
-    for (var i = 0; i < items.length; i++) {
-        connection.query(query, items[i], function (err, res) {
+    items.map(function (item) {
+        connection.query(query, item, function (err, res) {
             if (err) {
                 console.log("There was an error on insert of item: " + items[i] + " and error: " + err);
                 throw err;
             }
-            // console.log("Item inserted: " + items[i]);
+            console.log("Item inserted: " + item.product_name);
         });
-    }
+    });
+    queryUser();
 }
