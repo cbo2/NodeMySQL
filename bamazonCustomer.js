@@ -24,10 +24,18 @@ function runApp() {
     setupDB();
 }
 
+// My query for the challenge #3 has the inner join and works around the non-aggregated columns with 2 selects
+// select  d1.department_id, d1.department_name, d1.over_head_costs, prod_sales, prod_sales - over_head_costs as total_profits
+//    FROM departments as d1
+//    inner join (select department_name, sum(product_sales) as prod_sales from products group by department_name ) as p1
+//    on d1.department_name = p1.department_name;
+
+
 function queryUser() {
-    connection.query("SELECT item_id, product_name, price from products", function (err, res) {
+    connection.query("SELECT item_id, product_name, price, stock_quantity from products", function (err, res) {
+        if (err) { throw err; }
         console.log("-checking things and res.item_id is: " + res[0].item_id);
-        res.map(function (row) { console.log("==> item id is: " + row.item_id); });
+        // res.map(function (row) { console.log("==> item id is: " + row.item_id); });
         inquirer
             .prompt({
                 name: "item",
@@ -36,19 +44,29 @@ function queryUser() {
                 choices: res.map(function (item) { return item.product_name; })
             })
             .then(function (itemAnswer) {
-                var selectedItem = res.filter(function(curritem) {
+                var selectedItem = res.filter(function (curritem) {
                     return curritem.product_name === itemAnswer.item;
                 });
-                console.log("The full selected item has id: " + selectedItem[0].item_id + " and price: " + selectedItem[0].price);
                 inquirer
                     .prompt({
                         name: "quantity",
                         type: "input",
-                        message: "How many would you like?",
+                        message: "How many would you like ($" + selectedItem[0].price + " each)?",
                         choices: res.map(function (item) { return item.product_name; })
                     })
                     .then(function (quantityAnswer) {
-                        console.log("you requested " + quantityAnswer.quantity);
+                        if (selectedItem[0].stock_quantity < quantityAnswer.quantity) {
+                            console.log("Insufficient Quantity!!  Order cancelled!");
+                        } else {
+                            console.log("you requested " + quantityAnswer.quantity);
+                            var newQuantity = selectedItem[0].stock_quantity - parseInt(quantityAnswer.quantity);
+                            console.log("new quantity will be: " + newQuantity);
+                            connection.query("UPDATE products set stock_quantity = ? where item_id = ?",
+                                [parseInt(selectedItem[0].stock_quantity) - parseInt(quantityAnswer.quantity), selectedItem[0].item_id], function (err, res) {
+                                    if (err) { throw err; }
+                                    console.log("item updated!");
+                                });
+                        }
                     });
             });
     });
@@ -113,7 +131,7 @@ function seedDB() {
                 console.log("There was an error on insert of item: " + items[i] + " and error: " + err);
                 throw err;
             }
-            console.log("Item inserted: " + item.product_name);
+            // console.log("Item inserted: " + item.product_name);
         });
     });
     queryUser();
