@@ -38,13 +38,6 @@ inquirer
             setupDB();
         }
 
-        // My query for the challenge #3 has the inner join and works around the non-aggregated columns with 2 selects
-        // select  d1.department_id, d1.department_name, d1.over_head_costs, prod_sales, prod_sales - over_head_costs as total_profits
-        //    FROM departments as d1
-        //    inner join (select department_name, sum(product_sales) as prod_sales from products group by department_name ) as p1
-        //    on d1.department_name = p1.department_name;
-
-
         function queryUser() {
             connection.query("SELECT item_id, product_name, price, stock_quantity, product_sales from products", function (err, res) {
                 if (err) { throw err; }
