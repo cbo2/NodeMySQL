@@ -25,9 +25,6 @@ inquirer
             password: sqlpassword,
             // database: "bamazon"
         });
-
-
-
         connection.connect(function (err) {
             if (err) throw err;
             runApp();
@@ -39,13 +36,6 @@ function runApp() {
     setupDB();
 }
 
-// My query for the challenge #3 has the inner join and works around the non-aggregated columns with 2 selects
-// select  d1.department_id, d1.department_name, d1.over_head_costs, prod_sales, prod_sales - over_head_costs as total_profits
-//    FROM departments as d1
-//    inner join (select department_name, sum(product_sales) as prod_sales from products group by department_name ) as p1
-//    on d1.department_name = p1.department_name;
-
-
 function queryUser() {
 
     var table = new Table({
@@ -56,9 +46,6 @@ function queryUser() {
             "Total Profits"],
         colWidths: [10, 40, 20, 20, 20]
     });
-
-    // console.log(table.toString());
-    // process.exit();
 
     inquirer
         .prompt({
@@ -87,16 +74,37 @@ function queryUser() {
                                 entry.push(row.prod_sales);
                                 entry.push(row.total_profits);
                                 table.push(entry);
-                                // console.log(row.department_id, row.department_name, row.over_head_costs, 
-                                // row.prod_sales, row.total_profits);
                             });
                             console.log(table.toString());
-                            console.log("\n\n");
+                            console.log("\n");
+                            queryUser();
                         });
-                    queryUser();
                     break;
                 case "Create New Department":
-                    queryUser();
+                    inquirer.prompt([
+                        {
+                            type: "input",
+                            name: "depName",
+                            message: "New department name?"
+                        },
+                        {
+                            type: "input",
+                            name: "overHeadCost",
+                            message: "What is the overhead costs for this department?",
+                        },
+                    ]).then(function (newDept) {
+                        var newDepartment = {
+                             department_name: newDept.depName, 
+                             over_head_costs: newDept.overHeadCost 
+                        }
+                        connection.query("INSERT INTO departments set ?", newDepartment, function (err, res) {
+                            if (err) {
+                                console.log("There was an error on insert of item: " + newDepartment + " and error: " + err);
+                                throw err;
+                            }
+                            queryUser();
+                        });
+                    });
                     break;
                 case "Quit":
                     process.exit();
