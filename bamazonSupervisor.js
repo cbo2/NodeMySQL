@@ -146,7 +146,7 @@ function setupDB() {
 
 function seedDB() {
     var items = [
-        { department_name: "Shoes", over_head_costs: 20.00 },
+        // { department_name: "Shoes", over_head_costs: 20.00 },
         { department_name: "Electronics", over_head_costs: 3333.33 },
         { department_name: "Housewares", over_head_costs: 500.00 },
         { department_name: "Bath and Body", over_head_costs: 988.12 },
