@@ -21,7 +21,7 @@ inquirer
             user: "root",
 
             // Your password
-            password: sqlpassword,
+            password: sqlpassword,      // get the password from the user privately via inquirer
             // database: "bamazon"
         });
 
@@ -41,13 +41,12 @@ inquirer
         function queryUser() {
             connection.query("SELECT item_id, product_name, price, stock_quantity, product_sales from products", function (err, res) {
                 if (err) { throw err; }
-                // res.map(function (row) { console.log("==> item id is: " + row.item_id); });
                 inquirer
                     .prompt({
                         name: "item",
                         type: "list",
                         message: "Which item would you like to purchase?",
-                        choices: res.map(function (item) { return item.product_name; })
+                        choices: res.map(function (item) { return item.product_name; })  // use map on array
                     })
                     .then(function (itemAnswer) {
                         // use the filter function on array to get to the item selected via inquirer
